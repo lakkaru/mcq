@@ -5,14 +5,16 @@ const { connectDB, sequelize } = require('./config/database');
 require('dotenv').config(); // Load environment variables
 
 // Import models to ensure they are defined and can be synchronized
-// const User = require('./models/User');
+const User = require('./models/User');
 const ExamInfo = require('./models/ExamInfo');
 const Topic = require('./models/Topic');
 const Question = require('./models/Question');
 const QuestionAnswer = require('./models/QuestionAnswer');
-// const Note = require('./models/Note');
 
-// Setup associations explicitly (though already done in models, good for clarity)
+// Setup associations explicitly
+// User associations (for future features like user progress tracking)
+// User.hasMany(UserProgress, { foreignKey: 'userId' });
+
 // ExamInfo has many Questions
 ExamInfo.hasMany(Question, { foreignKey: 'exam_info_id' });
 Question.belongsTo(ExamInfo, { foreignKey: 'exam_info_id' });
@@ -25,18 +27,14 @@ Question.belongsTo(Topic, { foreignKey: 'topicId' });
 Question.hasMany(QuestionAnswer, { foreignKey: 'question_id', as: 'Question_Answers' });
 QuestionAnswer.belongsTo(Question, { foreignKey: 'question_id' });
 
-// User has many Notes
-// User.hasMany(Note, { foreignKey: 'userId' });
-// Note.belongsTo(User, { foreignKey: 'userId' });
-
-
 // Import routes
-// const authRoutes = require('./routes/authRoutes');
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const examInfoRoutes = require('./routes/examInfoRoutes');
 const examPaperRoutes = require('./routes/examPaperRoutes');
 const topicRoutes = require('./routes/topicRoutes');
 const questionRoutes = require('./routes/questionRoutes');
-// const noteRoutes = require('./routes/noteRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -49,25 +47,51 @@ app.use(express.json({limit:'10mb'})); // Parse JSON request bodies
 connectDB();
 
 // API Routes
-// app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/exams', examInfoRoutes);
 app.use('/api/exam-papers', examPaperRoutes);
 app.use('/api/topics', topicRoutes);
 app.use('/api/questions', questionRoutes);
-// app.use('/api/notes', noteRoutes); // Use this for user notes
 
 // Simple root route for health check
 app.get('/', (req, res) => {
-  res.send('MCQ Practice Backend API is running!');
+  res.json({
+    message: 'MCQ Practice Backend API is running!',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth',
+      users: '/api/users',
+      admin: '/api/admin',
+      exams: '/api/exams',
+      examPapers: '/api/exam-papers',
+      topics: '/api/topics',
+      questions: '/api/questions'
+    }
+  });
 });
 
 // Global error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send('Something broke!');
+  res.status(500).json({
+    success: false,
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+  });
+});
+
+// Handle 404 routes
+app.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
 });
 
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });

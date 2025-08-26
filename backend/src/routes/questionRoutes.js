@@ -1,25 +1,21 @@
-// Update your server/src/routes/questionRoutes.js to include the new route
-// Add this line after your existing routes:
-
 const express = require('express');
 const router = express.Router();
 const questionController = require('../controllers/questionController');
+const { authenticate, authorize, checkTrialStatus, requireAdmin } = require('../middleware/auth');
 
-// More specific routes first
-router.get('/numbers', questionController.getQuestionNumbersByExam);
-router.get('/by-exam-and-number', questionController.getQuestionByExamAndNumber);
-router.get('/by-exam', questionController.getQuestionsByExam); // Add this line for exam paper viewing
+// Public routes for authenticated users (students can view questions)
+router.use(authenticate); // All routes require authentication
 
-// List all questions (with filters)
-router.get('/', questionController.getQuestions);
+// Routes available to all authenticated users (with trial check for guest students)
+router.get('/numbers', checkTrialStatus, questionController.getQuestionNumbersByExam);
+router.get('/by-exam-and-number', checkTrialStatus, questionController.getQuestionByExamAndNumber);
+router.get('/by-exam', checkTrialStatus, questionController.getQuestionsByExam);
+router.get('/', checkTrialStatus, questionController.getQuestions);
+router.get('/:id', checkTrialStatus, questionController.getQuestionById);
 
-// Get a single question by ID
-router.get('/:id', questionController.getQuestionById);
-
-// Update a question by ID (PUT /api/questions/:id)
-router.put('/:id', questionController.updateQuestion);
-
-// Add a new question
-router.post('/', questionController.createQuestion);
+// Admin-only routes for managing questions
+router.post('/', requireAdmin, questionController.createQuestion);
+router.put('/:id', requireAdmin, questionController.updateQuestion);
+router.delete('/:id', requireAdmin, questionController.deleteQuestion);
 
 module.exports = router;

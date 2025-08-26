@@ -320,6 +320,42 @@ const getQuestionsByExam = async (req, res) => {
   }
 };
 
+// Delete a question by ID (admin only)
+const deleteQuestion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const question = await Question.findByPk(id, {
+      include: [{ model: QuestionAnswer, as: 'Question_Answers' }]
+    });
+    
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: 'Question not found'
+      });
+    }
+
+    // Delete associated answers first
+    await QuestionAnswer.destroy({
+      where: { question_id: id }
+    });
+
+    // Delete the question
+    await question.destroy();
+    
+    res.status(200).json({
+      success: true,
+      message: 'Question deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting question:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while deleting question'
+    });
+  }
+};
+
 module.exports = {
   getQuestions,
   getQuestionById,
@@ -328,4 +364,5 @@ module.exports = {
   getQuestionByExamAndNumber,
   updateQuestion,
   getQuestionsByExam,
+  deleteQuestion
 };

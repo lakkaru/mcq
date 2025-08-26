@@ -1,16 +1,18 @@
-// server/src/routes/topicRoutes.js
 const express = require('express');
 const router = express.Router();
 const topicController = require('../controllers/topicController');
-// const authenticateToken = require('../middleware/auth'); // For protected routes
+const { authenticate, checkTrialStatus, requireAdmin } = require('../middleware/auth');
 
-// Get all topics
-router.get('/', topicController.getAllTopics);
+// All routes require authentication
+router.use(authenticate);
 
-// Get topics by subject (e.g., /api/topics/by-subject?subject=History)
-router.get('/by-subject', topicController.getTopicsBySubject);
+// Routes available to all authenticated users (with trial check for guest students)
+router.get('/', checkTrialStatus, topicController.getAllTopics);
+router.get('/by-subject', checkTrialStatus, topicController.getTopicsBySubject);
 
-// Add a new topic (protected, e.g., for admin users)
-// router.post('/', authenticateToken, topicController.createTopic); // Example: requires authentication
+// Admin-only routes for managing topics
+router.post('/', requireAdmin, topicController.createTopic);
+router.put('/:id', requireAdmin, topicController.updateTopic);
+router.delete('/:id', requireAdmin, topicController.deleteTopic);
 
 module.exports = router;

@@ -1,22 +1,18 @@
-// server/src/routes/examInfoRoutes.js
 const express = require('express');
 const router = express.Router();
 const examInfoController = require('../controllers/examInfoController');
-// const authenticateToken = require('../middleware/auth'); // For protected routes
+const { authenticate, checkTrialStatus, requireAdmin } = require('../middleware/auth');
 
-// Get all exam information
-router.get('/', examInfoController.getAllExams);
+// All routes require authentication
+router.use(authenticate);
 
-// Get a single exam information by ID
-router.get('/:id', examInfoController.getExamById);
+// Routes available to all authenticated users (with trial check for guest students)
+router.get('/', checkTrialStatus, examInfoController.getAllExams);
+router.get('/:id', checkTrialStatus, examInfoController.getExamById);
 
-// Add new exam information (protected, e.g., for admin users)
-router.post('/', examInfoController.createExamInfo);
-
-// Update exam information by ID (protected, e.g., for admin users)
-router.put('/:id', examInfoController.updateExamInfo);
-
-// Delete exam information by ID (protected, e.g., for admin users)
-router.delete('/:id', examInfoController.deleteExamInfo);
+// Admin-only routes for managing exams
+router.post('/', requireAdmin, examInfoController.createExamInfo);
+router.put('/:id', requireAdmin, examInfoController.updateExamInfo);
+router.delete('/:id', requireAdmin, examInfoController.deleteExamInfo);
 
 module.exports = router;
