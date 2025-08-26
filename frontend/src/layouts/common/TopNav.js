@@ -1,37 +1,29 @@
-import * as React from 'react';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
-import Menu from '@mui/material/Menu';
-import MenuIcon from '@mui/icons-material/Menu';
-import Container from '@mui/material/Container';
-import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
-import Tooltip from '@mui/material/Tooltip';
-import MenuItem from '@mui/material/MenuItem';
-import AdbIcon from '@mui/icons-material/Adb';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const pages = [
-  {
-    name: 'Exam',
-    submenus: ['Create Exam', 'Update Exam', 'View Exam Paper', 'Delete Exam']
-  },
-  {
-    name: 'Question',
-    submenus: ['Create Question', 'Update Question', 'Delete Question']
-  },
-  {
-    name: 'Topic',
-    submenus: ['Create Topic', 'Update Topic', 'Delete Topic']
-  }
-];
-const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
+import {
+  AppBar,
+  Box,
+  Toolbar,
+  IconButton,
+  Typography,
+  Menu,
+  Container,
+  Avatar,
+  Button,
+  Tooltip,
+  MenuItem,
+} from '@mui/material';
+import {
+  Menu as MenuIcon,
+  AccountCircle as AccountCircleIcon,
+  Logout as LogoutIcon,
+  Person as PersonIcon,
+} from '@mui/icons-material';
+import { useAuth } from '../../contexts/AuthContext';
 
 function TopNav() {
   const navigate = useNavigate();
+  const { user, isAuthenticated, logout, hasAccess } = useAuth();
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
   const [submenuAnchorEls, setSubmenuAnchorEls] = React.useState({});
@@ -40,6 +32,7 @@ function TopNav() {
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
   };
+  
   const handleOpenUserMenu = (event) => {
     setAnchorElUser(event.currentTarget);
   };
@@ -48,37 +41,71 @@ function TopNav() {
     setAnchorElNav(null);
     setMobileSubmenuIndex(null);
   };
-
+  
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
   };
 
-  // Desktop submenu open/close handlers
   const handleOpenSubmenu = (event, index) => {
     setSubmenuAnchorEls((prev) => ({ ...prev, [index]: event.currentTarget }));
   };
+  
   const handleCloseSubmenu = (index) => {
     setSubmenuAnchorEls((prev) => ({ ...prev, [index]: null }));
   };
 
-  // Mobile submenu open/close handlers
   const handleMobileSubmenuOpen = (index) => {
     setMobileSubmenuIndex(index);
   };
-  const handleMobileSubmenuClose = () => {
-    setMobileSubmenuIndex(null);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
+  const handleUserMenuClick = (setting) => {
+    handleCloseUserMenu();
+    if (setting === 'Logout') {
+      handleLogout();
+    } else if (setting === 'Dashboard') {
+      navigate('/');
+    } else if (setting === 'Profile') {
+      navigate('/profile');
+    }
+  };
+
+  const pages = [
+    {
+      name: 'Exam',
+      submenus: ['Create Exam', 'Update Exam', 'View Exam Paper'],
+    },
+    {
+      name: 'Question',
+      submenus: ['Create Question', 'Update Question'],
+    },
+    {
+      name: 'Topic',
+      submenus: ['View Topic'],
+    },
+    {
+      name: 'Practice',
+      submenus: ['Start Practice'],
+    },
+  ];
+
   return (
-    <AppBar position="static">
+    <AppBar position="static" sx={{ backgroundColor: '#1976d2' }}>
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          {/* <AdbIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} /> */}
+          {/* Desktop Logo */}
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }}>
+            <img src="/logo192.png" alt="Logo" style={{ width: 40, height: 40 }} />
+          </Box>
           <Typography
             variant="h6"
             noWrap
             component="a"
-            href="#app-bar-with-responsive-menu"
+            href="/"
             sx={{
               mr: 2,
               display: { xs: 'none', md: 'flex' },
@@ -89,9 +116,10 @@ function TopNav() {
               textDecoration: 'none',
             }}
           >
-            MCQ <span ><sub style={{fontSize:'.5em'}}>master</sub></span>
+            MCQ APP
           </Typography>
 
+          {/* Mobile Menu */}
           <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
             <IconButton
               size="large"
@@ -117,49 +145,44 @@ function TopNav() {
               }}
               open={Boolean(anchorElNav)}
               onClose={handleCloseNavMenu}
-              sx={{ display: { xs: 'block', md: 'none' } }}
+              sx={{
+                display: { xs: 'block', md: 'none' },
+              }}
             >
-              {pages.map((page, idx) => (
-                <div key={page.name}>
-                  <MenuItem onClick={() => handleMobileSubmenuOpen(idx)}>
-                    <Typography sx={{ textAlign: 'center' }}>{page.name}</Typography>
-                  </MenuItem>
-                  <Menu
-                    anchorEl={anchorElNav}
-                    open={mobileSubmenuIndex === idx}
-                    onClose={handleMobileSubmenuClose}
-                    anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                  >
-                    {page.submenus.map((submenu) => (
-                    <MenuItem
-                      key={submenu}
-                      onClick={() => {
-                        handleCloseNavMenu();
-                        // Question menu navigation
-                        if (submenu === 'Create Question') navigate('/questions/create');
-                        else if (submenu === 'Update Question') navigate('/questions/update');
-                        // Exam menu navigation
-                        else if (submenu === 'Create Exam') navigate('/exams/create');
-                        else if (submenu === 'Update Exam') navigate('/exams/update');
-                        else if (submenu === 'View Exam Paper') navigate('/exams/view-paper');
-                        // Add more submenu navigation as needed
-                      }}
-                    >
-                      <Typography sx={{ textAlign: 'center' }}>{submenu}</Typography>
+              {isAuthenticated && hasAccess(['admin', 'student']) &&
+                pages.map((page, index) => (
+                  <div key={page.name}>
+                    <MenuItem onClick={() => handleMobileSubmenuOpen(index)}>
+                      <Typography textAlign="center">{page.name}</Typography>
                     </MenuItem>
-                    ))}
-                  </Menu>
-                </div>
-              ))}
+                    {mobileSubmenuIndex === index && page.submenus && (
+                      <Box sx={{ pl: 2 }}>
+                        {page.submenus.map((submenu) => (
+                          <MenuItem
+                            key={submenu}
+                            onClick={handleCloseNavMenu}
+                            sx={{ pl: 4 }}
+                          >
+                            <Typography variant="body2">{submenu}</Typography>
+                          </MenuItem>
+                        ))}
+                      </Box>
+                    )}
+                  </div>
+                ))
+              }
             </Menu>
           </Box>
-          <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
+
+          {/* Mobile Logo */}
+          <Box sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }}>
+            <img src="/logo192.png" alt="Logo" style={{ width: 30, height: 30 }} />
+          </Box>
           <Typography
             variant="h5"
             noWrap
             component="a"
-            href="#app-bar-with-responsive-menu"
+            href=""
             sx={{
               mr: 2,
               display: { xs: 'flex', md: 'none' },
@@ -171,78 +194,91 @@ function TopNav() {
               textDecoration: 'none',
             }}
           >
-            LOGO
+            MCQ APP
           </Typography>
+
+          {/* Desktop Navigation Menu */}
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            {pages.map((page, idx) => (
-              <Box key={page.name} sx={{ position: 'relative' }}>
-                <Button
-                  onClick={(e) => handleOpenSubmenu(e, idx)}
-                  sx={{ my: 2, color: 'white', display: 'block' }}
-                >
-                  {page.name}
-                </Button>
-                <Menu
-                  anchorEl={submenuAnchorEls[idx]}
-                  open={Boolean(submenuAnchorEls[idx])}
-                  onClose={() => handleCloseSubmenu(idx)}
-                  anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-                  transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-                >
-                  {page.submenus.map((submenu) => (
-                    <MenuItem
-                      key={submenu}
-                      onClick={() => {
-                        handleCloseSubmenu(idx);
-                        // Question menu navigation
-                        if (submenu === 'Create Question') navigate('/questions/create');
-                        else if (submenu === 'Update Question') navigate('/questions/update');
-                        // Exam menu navigation
-                        else if (submenu === 'Create Exam') navigate('/exams/create');
-                        else if (submenu === 'Update Exam') navigate('/exams/update');
-                        else if (submenu === 'View Exam Paper') navigate('/exams/view-paper');
-                        // Add more submenu navigation as needed
-                      }}
-                    >
-                      <Typography sx={{ textAlign: 'center' }}>{submenu}</Typography>
-                    </MenuItem>
-                  ))}
-                </Menu>
-              </Box>
-            ))}
+            {isAuthenticated && hasAccess(['admin', 'student']) &&
+              pages.map((page, index) => (
+                <div key={page.name}>
+                  <Button
+                    onClick={(e) => handleOpenSubmenu(e, index)}
+                    sx={{ my: 2, color: 'white', display: 'block' }}
+                  >
+                    {page.name}
+                  </Button>
+                  <Menu
+                    anchorEl={submenuAnchorEls[index]}
+                    open={Boolean(submenuAnchorEls[index])}
+                    onClose={() => handleCloseSubmenu(index)}
+                    sx={{ display: { xs: 'none', md: 'block' } }}
+                  >
+                    {page.submenus.map((submenu) => (
+                      <MenuItem
+                        key={submenu}
+                        onClick={() => handleCloseSubmenu(index)}
+                      >
+                        {submenu}
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                </div>
+              ))
+            }
           </Box>
+
+          {/* User Settings */}
           <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              sx={{ mt: '45px' }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
-            >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography sx={{ textAlign: 'center' }}>{setting}</Typography>
-                </MenuItem>
-              ))}
-            </Menu>
+            {isAuthenticated ? (
+              <>
+                <Tooltip title="Open settings">
+                  <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                    <Avatar sx={{ bgcolor: 'secondary.main' }}>
+                      {user?.name?.charAt(0) || 'U'}
+                    </Avatar>
+                  </IconButton>
+                </Tooltip>
+                <Menu
+                  sx={{ mt: '45px' }}
+                  id="menu-appbar"
+                  anchorEl={anchorElUser}
+                  anchorOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                  }}
+                  keepMounted
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                  }}
+                  open={Boolean(anchorElUser)}
+                  onClose={handleCloseUserMenu}
+                >
+                  <MenuItem onClick={() => handleUserMenuClick('Dashboard')}>
+                    <PersonIcon sx={{ mr: 1 }} />
+                    <Typography textAlign="center">Dashboard</Typography>
+                  </MenuItem>
+                  <MenuItem onClick={() => handleUserMenuClick('Profile')}>
+                    <AccountCircleIcon sx={{ mr: 1 }} />
+                    <Typography textAlign="center">Profile</Typography>
+                  </MenuItem>
+                  <MenuItem onClick={() => handleUserMenuClick('Logout')}>
+                    <LogoutIcon sx={{ mr: 1 }} />
+                    <Typography textAlign="center">Logout</Typography>
+                  </MenuItem>
+                </Menu>
+              </>
+            ) : (
+              <Button color="inherit" onClick={() => navigate('/login')}>
+                Login
+              </Button>
+            )}
           </Box>
         </Toolbar>
       </Container>
     </AppBar>
   );
 }
+
 export default TopNav;

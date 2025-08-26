@@ -1,11 +1,11 @@
 // API utilities for question CRUD operations
+import api from '../../utils/api';
 
 // Fetch all question numbers for a given exam
 export async function fetchQuestionNumbersByExam(examId) {
   try {
-    const res = await fetch(`http://localhost:5000/api/questions/numbers?examId=${examId}`);
-    if (!res.ok) return [];
-    return await res.json();
+    const response = await api.get(`/questions/numbers?examId=${examId}`);
+    return response.data || response;
   } catch (error) {
     console.error('Error fetching question numbers:', error);
     return [];
@@ -23,24 +23,19 @@ export async function fetchQuestionsByExam(examId, subject, language) {
     if (subject) params.append('subject', subject);
     if (language) params.append('language', language);
     
-    const url = `http://localhost:5000/api/questions/by-exam?${params}`;
-    console.log('Fetching questions from URL:', url);
+    const endpoint = `/questions/by-exam?${params}`;
+    console.log('Fetching questions from endpoint:', endpoint);
     
-    const res = await fetch(url);
-    console.log('Response status:', res.status);
+    const response = await api.get(endpoint);
+    console.log('Questions data received:', response);
     
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error('Error response:', errorText);
-      if (res.status === 404) return [];
-      throw new Error(`Failed to fetch questions: ${res.statusText}`);
-    }
-    
-    const data = await res.json();
-    console.log('Questions data received:', data);
-    return data;
+    return response.data || response;
   } catch (error) {
     console.error('Error fetching questions by exam:', error);
+    if (error.message.includes('401') || error.message.includes('Session expired')) {
+      // Handle authentication error specifically
+      throw new Error('Please login to access questions');
+    }
     throw error;
   }
 }
@@ -48,9 +43,8 @@ export async function fetchQuestionsByExam(examId, subject, language) {
 // Fetch a question by examId and questionNumber
 export async function fetchQuestionByExamAndNumber(examId, questionNumber) {
   try {
-    const res = await fetch(`http://localhost:5000/api/questions/by-exam-and-number?examId=${examId}&questionNumber=${questionNumber}`);
-    if (!res.ok) return null;
-    return await res.json();
+    const response = await api.get(`/questions/by-exam-and-number?examId=${examId}&questionNumber=${questionNumber}`);
+    return response.data || response;
   } catch (error) {
     console.error('Error fetching question by exam and number:', error);
     return null;
@@ -60,9 +54,8 @@ export async function fetchQuestionByExamAndNumber(examId, questionNumber) {
 // Fetch a question by its unique ID
 export async function fetchQuestionById(id) {
   try {
-    const res = await fetch(`http://localhost:5000/api/questions/${id}`);
-    if (!res.ok) return null;
-    return await res.json();
+    const response = await api.get(`/questions/${id}`);
+    return response.data || response;
   } catch (error) {
     console.error('Error fetching question by ID:', error);
     return null;
@@ -72,15 +65,32 @@ export async function fetchQuestionById(id) {
 // Update a question by its unique ID
 export async function updateQuestion(id, data) {
   try {
-    const res = await fetch(`http://localhost:5000/api/questions/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (!res.ok) throw new Error('Failed to update question');
-    return await res.json();
+    const response = await api.put(`/questions/${id}`, data);
+    return response.data || response;
   } catch (error) {
     console.error('Error updating question:', error);
+    throw error;
+  }
+}
+
+// Create a new question (admin only)
+export async function createQuestion(data) {
+  try {
+    const response = await api.post('/questions', data);
+    return response.data || response;
+  } catch (error) {
+    console.error('Error creating question:', error);
+    throw error;
+  }
+}
+
+// Delete a question (admin only)
+export async function deleteQuestion(id) {
+  try {
+    const response = await api.delete(`/questions/${id}`);
+    return response.data || response;
+  } catch (error) {
+    console.error('Error deleting question:', error);
     throw error;
   }
 }
